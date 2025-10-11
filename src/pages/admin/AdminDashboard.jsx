@@ -72,6 +72,9 @@ const AdminDashboard = () => {
   const [incidents, setIncidents] = useState([])
   const [showElectionForm, setShowElectionForm] = useState(false)
   const [showCandidateForm, setShowCandidateForm] = useState(false)
+  const [showCreateAdminDialog, setShowCreateAdminDialog] = useState(false)
+  const [showCreateInecDialog, setShowCreateInecDialog] = useState(false)
+  const [createForm, setCreateForm] = useState({ name: '', phone_number: '', password: '' })
   const [electionForm, setElectionForm] = useState({
     title: '',
     type: '',
@@ -350,6 +353,56 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleCreateFormChange = (e) => {
+    const { name, value } = e.target
+    setCreateForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCreateAdmin = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const payload = {
+        name: createForm.name,
+        phone_number: createForm.phone_number,
+        password: createForm.password
+      }
+      const resp = await authAPI.createAdmin(payload)
+      setSuccess(resp.data?.message || 'Admin created successfully')
+      setShowCreateAdminDialog(false)
+      setCreateForm({ name: '', phone_number: '', password: '' })
+      // Refresh users/voters list
+      await Promise.all([loadVoters(), loadDashboardStats()])
+    } catch (err) {
+      console.error('Create admin failed', err)
+      setError(err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to create admin')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateInec = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const payload = {
+        name: createForm.name,
+        phone_number: createForm.phone_number,
+        password: createForm.password
+      }
+      const resp = await authAPI.createInecOfficial(payload)
+      setSuccess(resp.data?.message || 'INEC Official created successfully')
+      setShowCreateInecDialog(false)
+      setCreateForm({ name: '', phone_number: '', password: '' })
+      await Promise.all([loadVoters(), loadDashboardStats()])
+    } catch (err) {
+      console.error('Create INEC official failed', err)
+      setError(err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to create INEC official')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleVerifyVoter = async (voterId) => {
     setLoading(true)
     try {
@@ -503,7 +556,7 @@ const AdminDashboard = () => {
                   <Typography variant="body1">
                     Welcome to the admin dashboard. Here you can manage elections, verify voters, and monitor incidents.
                   </Typography>
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 3 }}>
                     <Button
                       variant="contained"
                       startIcon={<Add />}
@@ -529,13 +582,30 @@ const AdminDashboard = () => {
                     >
                       Verify Voters
                     </Button>
+                    {/* Create Admin (superuser only) */}
+                    {user?.is_superuser && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<Add />}
+                        onClick={() => setShowCreateAdminDialog(true)}
+                        sx={{ mr: 2 }}
+                      >
+                        Create Admin
+                      </Button>
+                    )}
 
-                    <Button
-                      variant="outlined"
-                      onClick={handleTriggerElectionManagement}
-                    >
-                      Check Status
-                    </Button>
+                    {/* Create INEC Official (superuser or admin) */}
+                    {(user?.is_superuser || isAdmin) && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<People />}
+                        onClick={() => setShowCreateInecDialog(true)}
+                        sx={{ mr: 2 }}
+                      >
+                        Create INEC Official
+                      </Button>
+                    )}
+                    
                   </Box>
                 </CardContent>
               </Card>
@@ -815,6 +885,50 @@ const AdminDashboard = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Create Election'}
             </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create Admin Dialog (Superuser only) */}
+        <Dialog open={showCreateAdminDialog} onClose={() => setShowCreateAdminDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Create Admin</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Name" name="name" value={createForm.name} onChange={handleCreateFormChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Phone Number" name="phone_number" value={createForm.phone_number} onChange={handleCreateFormChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Password" name="password" type="password" value={createForm.password} onChange={handleCreateFormChange} />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowCreateAdminDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateAdmin} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create Admin'}</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create INEC Official Dialog (Superuser/Admin) */}
+        <Dialog open={showCreateInecDialog} onClose={() => setShowCreateInecDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Create INEC Official</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Name" name="name" value={createForm.name} onChange={handleCreateFormChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Phone Number" name="phone_number" value={createForm.phone_number} onChange={handleCreateFormChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Password" name="password" type="password" value={createForm.password} onChange={handleCreateFormChange} />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowCreateInecDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateInec} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create INEC Official'}</Button>
           </DialogActions>
         </Dialog>
 

@@ -88,6 +88,10 @@ export const authAPI = {
   getUsers: () => api.get('/auth/users/'),
   getVoters: () => api.get('/auth/voters/').then(normalizeListResponse),
   verifyVoter: (voterId) => api.post(`/auth/voters/${voterId}/verify/`),
+  // Create admin (Superuser only)
+  createAdmin: (data) => api.post('/auth/create-admin/', data),
+  // Create INEC Official (Superuser or Admin)
+  createInecOfficial: (data) => api.post('/auth/create-inec-official/', data),
 }
 
 // Elections API
