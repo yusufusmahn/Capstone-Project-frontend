@@ -27,6 +27,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  // Poll profile if logged-in voter is pending verification so their dashboard updates automatically
+  useEffect(() => {
+    if (!user || user.role !== 'voter') return
+    if (profile && profile.registration_verified) return
+
+    let attempts = 0
+    const maxAttempts = 30 // ~4 minutes
+    const interval = setInterval(async () => {
+      attempts += 1
+      try {
+        const response = await authAPI.getProfile()
+        setUser(response.data.user)
+        setProfile(response.data.profile)
+        if (response.data.profile && response.data.profile.registration_verified) {
+          clearInterval(interval)
+        }
+      } catch (e) {
+        console.warn('Profile polling failed', e)
+      }
+      if (attempts >= maxAttempts) {
+        clearInterval(interval)
+      }
+    }, 8000)
+
+    return () => clearInterval(interval)
+  }, [user, profile])
+
   const loadUserProfile = async () => {
     try {
       const response = await authAPI.getProfile()

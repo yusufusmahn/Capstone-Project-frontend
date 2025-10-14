@@ -75,6 +75,9 @@ const AdminDashboard = () => {
   const [showCreateAdminDialog, setShowCreateAdminDialog] = useState(false)
   const [showCreateInecDialog, setShowCreateInecDialog] = useState(false)
   const [createForm, setCreateForm] = useState({ name: '', phone_number: '', password: '' })
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)
+  const [confirmPayload, setConfirmPayload] = useState(null)
   const [electionForm, setElectionForm] = useState({
     title: '',
     type: '',
@@ -404,20 +407,10 @@ const AdminDashboard = () => {
   }
 
   const handleVerifyVoter = async (voterId) => {
-    setLoading(true)
-    try {
-      const resp = await authAPI.verifyVoter(voterId)
-      console.log('Verify voter response:', resp)
-      setSuccess(resp.data?.message || 'Voter verified successfully!')
-      // Refresh lists
-      await Promise.all([loadVoters(), loadDashboardStats()])
-    } catch (err) {
-      console.error('Verify voter error:', err)
-      const message = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify voter.'
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
+    // Open confirmation dialog before performing the action
+    setConfirmAction('verify')
+    setConfirmPayload(voterId)
+    setConfirmOpen(true)
   }
 
   const handleDeleteElection = async (electionId) => {
@@ -681,14 +674,18 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           {!voter.registration_verified && (
-                            <Button
-                              size="small"
-                              startIcon={<CheckCircle />}
-                              onClick={() => handleVerifyVoter(voter.voter_id)}
-                              disabled={loading}
-                            >
-                              Verify
-                            </Button>
+                              <>
+                                <Button size="small" onClick={async () => handleVerifyVoter(voter.voter_id)}>
+                                  Verify
+                                </Button>
+                                <Button size="small" color="error" onClick={async () => {
+                                  setConfirmAction('cancel')
+                                  setConfirmPayload(voter.voter_id)
+                                  setConfirmOpen(true)
+                                }} sx={{ ml: 1 }}>
+                                  Cancel
+                                </Button>
+                              </>
                           )}
                         </TableCell>
                       </TableRow>
@@ -906,7 +903,13 @@ const AdminDashboard = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateAdminDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateAdmin} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create Admin'}</Button>
+            <Button onClick={() => {
+              // open confirmation before creating
+              setShowCreateAdminDialog(false)
+              setConfirmAction('create_admin')
+              setConfirmPayload({ ...createForm })
+              setConfirmOpen(true)
+            }} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create Admin'}</Button>
           </DialogActions>
         </Dialog>
 
@@ -928,7 +931,56 @@ const AdminDashboard = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateInecDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateInec} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create INEC Official'}</Button>
+            <Button onClick={() => {
+              // open confirmation before creating
+              setShowCreateInecDialog(false)
+              setConfirmAction('create_inec')
+              setConfirmPayload({ ...createForm })
+              setConfirmOpen(true)
+            }} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create INEC Official'}</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Confirm Action Dialog (shared for Verify/Cancel) */}
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Confirm action</DialogTitle>
+          <DialogContent>
+            <Typography>
+              {confirmAction === 'verify' ? 'Are you sure you want to verify this voter? This will allow them to vote.' : 'Are you sure you want to cancel this voter registration?'}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)}>No</Button>
+            <Button onClick={async () => {
+              setConfirmOpen(false)
+              setLoading(true)
+              try {
+                if (confirmAction === 'verify') {
+                  const resp = await authAPI.verifyVoter(confirmPayload)
+                  setSuccess(resp.data?.message || 'Voter verified successfully!')
+                } else if (confirmAction === 'cancel') {
+                  const resp = await authAPI.cancelVoter(confirmPayload)
+                  setSuccess(resp.data?.message || 'Voter registration cancelled')
+                } else if (confirmAction === 'create_admin') {
+                  const resp = await authAPI.createAdmin(confirmPayload)
+                  setSuccess(resp.data?.message || 'Admin created successfully')
+                  // clear create form
+                  setCreateForm({ name: '', phone_number: '', password: '' })
+                } else if (confirmAction === 'create_inec') {
+                  const resp = await authAPI.createInecOfficial(confirmPayload)
+                  setSuccess(resp.data?.message || 'INEC Official created successfully')
+                  setCreateForm({ name: '', phone_number: '', password: '' })
+                }
+
+                await Promise.all([loadVoters(), loadDashboardStats()])
+              } catch (e) {
+                setError((e.response?.data?.error || e.response?.data?.message) || e.message || 'Action failed')
+              } finally {
+                setLoading(false)
+                setConfirmAction(null)
+                setConfirmPayload(null)
+              }
+            }} variant="contained">Yes</Button>
           </DialogActions>
         </Dialog>
 

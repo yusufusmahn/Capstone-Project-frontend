@@ -47,13 +47,8 @@ const Login = () => {
         setError('Your registration is pending INEC verification. Please wait for approval before accessing voting features.')
       }
       
-      // Redirect based on user role (admins and INEC officials go to admin dashboard)
-      const userRole = result.user.role
-      if (userRole === 'admin' || userRole === 'inec_official' || result.user.is_superuser) {
-        navigate('/admin')
-      } else {
-        navigate('/')
-      }
+      // Redirect everyone to main dashboard; admin users can navigate to admin area from dashboard
+      navigate('/')
     } else {
       setError(result.error || 'Login failed. Please check your credentials and try again.')
     }

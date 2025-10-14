@@ -140,7 +140,7 @@ const Register = () => {
         background: 'linear-gradient(135deg, #008751 0%, #008751 50%, #FFFFFF 50%, #FFFFFF 100%)',
       }}
     >
-      <Container component="main" maxWidth="sm">
+      <Container component="main" maxWidth="xs">
         <Box
           sx={{
             display: 'flex',
@@ -148,7 +148,7 @@ const Register = () => {
             alignItems: 'center',
           }}
         >
-          <Paper elevation={6} sx={{ padding: 4, width: '100%', borderRadius: 2 }}>
+          <Paper elevation={6} sx={{ padding: 3, width: '100%', borderRadius: 2, maxHeight: '80vh', overflow: 'auto' }}>
             <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ color: '#008751', fontWeight: 'bold' }}>
               Register for Voting
             </Typography>
