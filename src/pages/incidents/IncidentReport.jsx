@@ -83,9 +83,6 @@ const IncidentReport = () => {
     try {
       // If user is admin/inec, load all incidents; otherwise load my incidents
       let response
-      console.log('IncidentReport loadMyIncidents - user:', user)
-      console.log('IncidentReport role helpers - isAdmin:', isAdmin, 'isInec:', isInec)
-      // Use role helpers from AuthContext (isAdmin/isInec)
       if (isAdmin || isInec) {
         response = await incidentsAPI.getIncidents()
         setMyIncidents(response.data || [])
@@ -239,26 +236,28 @@ const IncidentReport = () => {
                         <Report />
                       </ListItemIcon>
                       <ListItemText
-                        primary={incident.incident_type.replace('_', ' ')}
+                        primary={<Typography component="div" variant="body1">{incident.incident_type.replace('_', ' ')}</Typography>}
                         secondary={
-                          <>
-                            <Typography component="span" variant="body2" color="text.primary">
+                          <Box>
+                            <Typography component="div" variant="body2" color="text.primary">
                               {incident.description.substring(0, 50)}...
                             </Typography>
-                            <br />
-                            <Chip 
-                              label={incident.status} 
-                              size="small" 
-                              color={getStatusColor(incident.status)}
-                              sx={{ mr: 1 }}
-                            />
-                            <Chip 
-                              label={incident.priority} 
-                              size="small" 
-                              color={priorityLevels.find(p => p.value === incident.priority)?.color || 'default'}
-                            />
-                          </>
+                            <Box sx={{ mt: 1 }}>
+                              <Chip 
+                                label={incident.status} 
+                                size="small" 
+                                color={getStatusColor(incident.status)}
+                                sx={{ mr: 1 }}
+                              />
+                              <Chip 
+                                label={incident.priority} 
+                                size="small" 
+                                color={priorityLevels.find(p => p.value === incident.priority)?.color || 'default'}
+                              />
+                            </Box>
+                          </Box>
                         }
+                        secondaryTypographyProps={{ component: 'div' }}
                       />
                       <Typography variant="body2" color="text.secondary">
                         {new Date(incident.created_at).toLocaleDateString()}
@@ -315,7 +314,7 @@ const IncidentReport = () => {
               <CardHeader title="Reporting Guidelines" />
               <Divider />
               <CardContent>
-                <Typography variant="body2" paragraph>
+                <Typography variant="body2" component="div" sx={{ mb: 1 }}>
                   Please provide accurate information when reporting incidents:
                 </Typography>
                 <List dense>

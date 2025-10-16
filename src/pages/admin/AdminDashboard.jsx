@@ -10,6 +10,9 @@ import {
   CardContent,
   CardHeader,
   Paper,
+  List,
+  ListItem,
+  ListItemText,
   Tabs,
   Tab,
   Table,
@@ -45,12 +48,14 @@ import {
   CheckCircle,
   Cancel,
   Verified,
-  Refresh
+  Refresh,
+  Warning
 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import { authAPI, adminAPI, electionsAPI, incidentsAPI } from '../../services/api'
 import { Layout } from '../../components/layout/Layout'
 import ErrorBoundary from '../../components/common/ErrorBoundary'
+import ActionButton from '../../components/common/ActionButton'
 
 const AdminDashboard = () => {
   const { user, isAdmin, isInec } = useAuth()
@@ -93,8 +98,12 @@ const AdminDashboard = () => {
     election: '',
     photo: null
   })
+  const [lastRefreshed, setLastRefreshed] = useState(new Date())
+
   const loadData = async () => {
     setLoading(true)
+    setError('')
+    setSuccess('')
     try {
       await Promise.all([
         loadDashboardStats(),
@@ -102,6 +111,7 @@ const AdminDashboard = () => {
         loadVoters(),
         loadIncidents()
       ]);
+      setLastRefreshed(new Date())
     } catch (err) {
       console.error('Failed to load initial data:', err);
       setError('Failed to load dashboard data. Please refresh the page.');
@@ -116,24 +126,17 @@ const AdminDashboard = () => {
       setError('Failed to initialize dashboard. Please refresh the page.');
     });
     
-    // Set up periodic check for election management
     const interval = setInterval(() => {
-      // This is just a reminder - in a real application, you would implement
-      // a backend API endpoint to trigger election management
-      console.log('Checking for elections that need management...');
-    }, 60000); // Check every minute
+      // periodic check placeholder
+    }, 60000);
     
     return () => clearInterval(interval);
   }, [])
 
   const loadElections = async () => {
     try {
-      console.log('Loading elections...')
-      const response = await electionsAPI.getElections()
-      console.log('Elections API response:', response)
-      const electionsData = response.data || []
-      console.log('Elections data:', electionsData)
-      console.log('Elections count:', electionsData.length)
+  const response = await electionsAPI.getElections()
+  const electionsData = response.data || []
       setElections(electionsData)
     } catch (err) {
       console.error('Failed to load elections:', err)
@@ -143,11 +146,10 @@ const AdminDashboard = () => {
 
   const loadDashboardStats = async () => {
     try {
-      console.log('Loading dashboard stats...')
-      // Prefer centralized admin helper
+      // loading dashboard stats
       try {
         const statsRes = await adminAPI.getDashboardStats()
-        console.log('Dashboard stats (central):', statsRes)
+        // statsRes may be an aggregated response
         setStats({
           totalElections: Number(statsRes.totalElections || 0),
           activeElections: Number(statsRes.activeElections || 0),
@@ -162,7 +164,6 @@ const AdminDashboard = () => {
         console.warn('adminAPI.getDashboardStats failed, falling back to manual aggregation:', err)
       }
 
-      // Fallback: aggregate directly
       const [electionsRes, votersRes, incidentsRes] = await Promise.all([
         electionsAPI.getElections(),
         authAPI.getVoters(),
@@ -189,9 +190,7 @@ const AdminDashboard = () => {
 
   const loadVoters = async () => {
     try {
-      console.log('Loading voters...')
-      const response = await authAPI.getVoters()
-      console.log('Voters loaded:', response.data)
+  const response = await authAPI.getVoters()
       setVoters(response.data || [])
     } catch (err) {
       console.error('Failed to load voters:', err)
@@ -201,9 +200,8 @@ const AdminDashboard = () => {
 
   const loadIncidents = async () => {
     try {
-      console.log('Loading incidents...')
-      const response = await incidentsAPI.getIncidents()
-      console.log('Incidents loaded:', response.data)
+  const response = await incidentsAPI.getIncidents()
+  // incidents loaded
       setIncidents(response.data || [])
     } catch (err) {
       console.error('Failed to load incidents:', err)
@@ -212,33 +210,29 @@ const AdminDashboard = () => {
   }
 
   const handleTabChange = (event, newValue) => {
-    console.log('Switching to tab:', newValue)
-    console.log('Current elections:', elections)
-    console.log('Current voters:', voters)
-    console.log('Current incidents:', incidents)
+  // switch tab handler
     setTabValue(newValue)
     
-    // Reload data when switching tabs to ensure freshness
     switch(newValue) {
-      case 0: // Overview
+      case 0:
         loadDashboardStats().catch(err => {
           console.error('Failed to load dashboard stats:', err)
           setError('Failed to load dashboard stats: ' + (err.message || err.toString()))
         })
         break
-      case 1: // Elections
+      case 1:
         loadElections().catch(err => {
           console.error('Failed to load elections:', err)
           setError('Failed to load elections: ' + (err.message || err.toString()))
         })
         break
-      case 2: // Voters
+      case 2:
         loadVoters().catch(err => {
           console.error('Failed to load voters:', err)
           setError('Failed to load voters: ' + (err.message || err.toString()))
         })
         break
-      case 3: // Incidents
+      case 3:
         loadIncidents().catch(err => {
           console.error('Failed to load incidents:', err)
           setError('Failed to load incidents: ' + (err.message || err.toString()))
@@ -265,7 +259,6 @@ const AdminDashboard = () => {
     }))
   }
 
-  // Handle file input for candidate photo
   const handleCandidatePhotoChange = (e) => {
     const file = e.target.files?.[0] || null
     setCandidateForm(prev => ({
@@ -278,9 +271,8 @@ const AdminDashboard = () => {
     setLoading(true)
     setError('')
     try {
-      console.log('Creating election with data:', electionForm)
       const response = await electionsAPI.createElection(electionForm)
-      console.log('Election created successfully:', response)
+  // election created
       setSuccess('Election created successfully! Elections with start dates that have passed need to be manually started using the management commands.')
       setShowElectionForm(false)
       setElectionForm({
@@ -290,14 +282,12 @@ const AdminDashboard = () => {
         start_date: '',
         end_date: ''
       })
-      // Add a small delay to ensure the backend has time to process
       await new Promise(resolve => setTimeout(resolve, 1000))
-      // Reload elections and stats
       await Promise.all([
         loadElections(),
         loadDashboardStats()
       ])
-      console.log('Data reloaded after election creation')
+  // data reloaded after election creation
     } catch (err) {
       console.error('Failed to create election:', err)
       setError('Failed to create election: ' + (err.response?.data?.detail || err.response?.data?.error || err.message || err.toString()))
@@ -310,7 +300,7 @@ const AdminDashboard = () => {
     setLoading(true)
     setError('')
     try {
-      console.log('Creating candidate with data:', candidateForm)
+  // creating candidate
       let payload = candidateForm
       if (candidateForm.photo) {
         const formData = new FormData()
@@ -323,9 +313,8 @@ const AdminDashboard = () => {
         payload = formData
       }
 
-      const response = await electionsAPI.createCandidate(payload)
-      console.log('Candidate created successfully:', response)
-      // Verify if the backend returned the candidate or if we can fetch candidates for the election
+  const response = await electionsAPI.createCandidate(payload)
+  // candidate created
       let photoSaved = false
       try {
         const candidatesRes = await electionsAPI.getCandidates(candidateForm.election)
@@ -335,7 +324,6 @@ const AdminDashboard = () => {
         console.warn('Could not verify candidate photo after creation:', e)
       }
 
-  // Signal success; photo upload verification is noisy, so present a positive message
   setSuccess('Candidate created successfully! The candidate has been added. If you uploaded a photo it should appear in the candidate list.')
       setShowCandidateForm(false)
       setCandidateForm({
@@ -346,7 +334,6 @@ const AdminDashboard = () => {
         election: '',
         photo: null
       })
-      // Reload elections to reflect any changes
       await loadElections()
     } catch (err) {
       console.error('Failed to create candidate:', err)
@@ -374,7 +361,6 @@ const AdminDashboard = () => {
       setSuccess(resp.data?.message || 'Admin created successfully')
       setShowCreateAdminDialog(false)
       setCreateForm({ name: '', phone_number: '', password: '' })
-      // Refresh users/voters list
       await Promise.all([loadVoters(), loadDashboardStats()])
     } catch (err) {
       console.error('Create admin failed', err)
@@ -407,7 +393,6 @@ const AdminDashboard = () => {
   }
 
   const handleVerifyVoter = async (voterId) => {
-    // Open confirmation dialog before performing the action
     setConfirmAction('verify')
     setConfirmPayload(voterId)
     setConfirmOpen(true)
@@ -431,7 +416,6 @@ const AdminDashboard = () => {
     try {
       const response = await electionsAPI.checkElectionStatus()
       setSuccess('Election status check completed successfully. Elections have been updated based on current time.')
-      // Reload data to reflect changes
       await loadData()
     } catch (err) {
       console.error('Failed to trigger election management:', err)
@@ -454,18 +438,30 @@ const AdminDashboard = () => {
   return (
     <ErrorBoundary>
     <Layout>
-      <Container maxWidth="lg">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Admin Dashboard
-          <IconButton 
-            onClick={loadData} 
-            size="small" 
-            sx={{ ml: 2 }}
-            disabled={loading}
-          >
-            <Refresh />
-          </IconButton>
-        </Typography>
+      <Container maxWidth="lg" className="admin-dashboard">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1" sx={{ color: '#008751', fontWeight: 'bold' }}>
+            Admin Dashboard
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="body2" sx={{ mr: 2, color: 'text.secondary' }}>
+              Last updated: {lastRefreshed.toLocaleTimeString()}
+            </Typography>
+            <IconButton 
+              onClick={loadData} 
+              size="large"
+              sx={{ 
+                backgroundColor: '#e8f5e9',
+                '&:hover': {
+                  backgroundColor: '#c8e6c9'
+                }
+              }}
+              disabled={loading}
+            >
+              <Refresh sx={{ color: '#008751' }} />
+            </IconButton>
+          </Box>
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -479,51 +475,90 @@ const AdminDashboard = () => {
           </Alert>
         )}
 
-        {/* Dashboard Stats */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card className="soft-card" sx={{ 
+              boxShadow: 3, 
+              border: 0,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-5px)'
+              }
+            }}>
               <CardContent>
-                <Typography variant="h4" align="center">
-                  {loading ? <CircularProgress size={30} /> : (stats?.totalElections || 0)}
-                </Typography>
-                <Typography variant="body2" align="center" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <HowToVote sx={{ fontSize: 40, color: '#008751' }} />
+                  <Typography variant="h4" align="right">
+                    {loading ? <CircularProgress size={30} /> : (stats?.totalElections || 0)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" align="right" color="text.secondary" sx={{ mt: 1 }}>
                   Total Elections
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card className="soft-card" sx={{ 
+              boxShadow: 3, 
+              border: 0,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-5px)'
+              }
+            }}>
               <CardContent>
-                <Typography variant="h4" align="center" color="primary">
-                  {loading ? <CircularProgress size={30} /> : (stats?.activeElections || 0)}
-                </Typography>
-                <Typography variant="body2" align="center" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <CheckCircle sx={{ fontSize: 40, color: '#4caf50' }} />
+                  <Typography variant="h4" align="right" color="primary">
+                    {loading ? <CircularProgress size={30} /> : (stats?.activeElections || 0)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" align="right" color="text.secondary" sx={{ mt: 1 }}>
                   Active Elections
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card className="soft-card" sx={{ 
+              boxShadow: 3, 
+              border: 0,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-5px)'
+              }
+            }}>
               <CardContent>
-                <Typography variant="h4" align="center">
-                  {loading ? <CircularProgress size={30} /> : (stats?.totalVoters || 0)}
-                </Typography>
-                <Typography variant="body2" align="center" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <People sx={{ fontSize: 40, color: '#2196f3' }} />
+                  <Typography variant="h4" align="right">
+                    {loading ? <CircularProgress size={30} /> : (stats?.totalVoters || 0)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" align="right" color="text.secondary" sx={{ mt: 1 }}>
                   Registered Voters
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card className="soft-card" sx={{ 
+              boxShadow: 3, 
+              border: 0,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-5px)'
+              }
+            }}>
               <CardContent>
-                <Typography variant="h4" align="center" color="warning.main">
-                  {loading ? <CircularProgress size={30} /> : (stats?.pendingVoters || 0)}
-                </Typography>
-                <Typography variant="body2" align="center" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Warning sx={{ fontSize: 40, color: '#ff9800' }} />
+                  <Typography variant="h4" align="right" color="warning.main">
+                    {loading ? <CircularProgress size={30} /> : (stats?.pendingVoters || 0)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" align="right" color="text.secondary" sx={{ mt: 1 }}>
                   Pending Verification
                 </Typography>
               </CardContent>
@@ -531,565 +566,924 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
 
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
-          <Tab icon={<Dashboard />} label="Overview" />
-          <Tab icon={<HowToVote />} label="Elections" />
-          <Tab icon={<People />} label="Voters" />
-          <Tab icon={<Report />} label="Incidents" />
-          <Tab icon={<BarChart />} label="Reports" />
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange} 
+          sx={{ mb: 3 }}
+          TabIndicatorProps={{
+            style: {
+              backgroundColor: '#008751'
+            }
+          }}
+        >
+          <Tab icon={<Dashboard sx={{ color: '#008751' }} />} label="Overview" />
+          <Tab icon={<HowToVote sx={{ color: '#008751' }} />} label="Elections" />
+          <Tab icon={<People sx={{ color: '#008751' }} />} label="Voters" />
+          <Tab icon={<Report sx={{ color: '#008751' }} />} label="Incidents" />
+          <Tab icon={<BarChart sx={{ color: '#008751' }} />} label="Reports" />
         </Tabs>
 
-        {/* Overview Tab */}
         {tabValue === 0 && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={8}>
-              <Card>
-                <CardHeader title="Recent Activity" />
+              <Card className="soft-card" sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardHeader 
+                  title="Quick Actions" 
+                  sx={{ backgroundColor: '#e8f5e9' }}
+                />
                 <CardContent>
-                  <Typography variant="body1">
-                    Welcome to the admin dashboard. Here you can manage elections, verify voters, and monitor incidents.
-                  </Typography>
-                  <Box sx={{ mt: 3 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => setShowElectionForm(true)}
-                      sx={{ mr: 2 }}
-                    >
-                      Create Election
-                    </Button>
-                    {/* Add Candidate button visible on desktop */}
-                    <Button
-                      variant="outlined"
-                      startIcon={<Add />}
-                      onClick={() => setShowCandidateForm(true)}
-                      sx={{ mr: 2 }}
-                    >
-                      Add Candidate
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<People />}
-                      onClick={() => setTabValue(2)}
-                      sx={{ mr: 2 }}
-                    >
-                      Verify Voters
-                    </Button>
-                    {/* Create Admin (superuser only) */}
+                        <Typography variant="body1" component="div" sx={{ mb: 1 }}>
+                          Welcome to the admin dashboard. Here you can manage elections, verify voters, and monitor incidents.
+                        </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 3 }}>
+                    <ActionButton startIcon={<Add sx={{ color: '#008751' }} />} onClick={() => setShowElectionForm(true)}>Create Election</ActionButton>
+                    <ActionButton startIcon={<Add sx={{ color: '#008751' }} />} onClick={() => setShowCandidateForm(true)}>Add Candidate</ActionButton>
+                    <ActionButton startIcon={<People sx={{ color: '#008751' }} />} onClick={() => setTabValue(2)}>Verify Voters</ActionButton>
                     {user?.is_superuser && (
-                      <Button
-                        variant="outlined"
-                        startIcon={<Add />}
-                        onClick={() => setShowCreateAdminDialog(true)}
-                        sx={{ mr: 2 }}
-                      >
-                        Create Admin
-                      </Button>
+                      <ActionButton startIcon={<Add sx={{ color: '#008751' }} />} onClick={() => setShowCreateAdminDialog(true)}>Create Admin</ActionButton>
                     )}
 
-                    {/* Create INEC Official (superuser or admin) */}
                     {(user?.is_superuser || isAdmin) && (
-                      <Button
-                        variant="outlined"
-                        startIcon={<People />}
-                        onClick={() => setShowCreateInecDialog(true)}
-                        sx={{ mr: 2 }}
-                      >
-                        Create INEC Official
-                      </Button>
+                      <ActionButton startIcon={<People sx={{ color: '#008751' }} />} onClick={() => setShowCreateInecDialog(true)}>Create INEC Official</ActionButton>
                     )}
-                    
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Card>
-                <CardHeader title="Quick Stats" />
+              <Card className="soft-card" sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardHeader 
+                  title="Quick Stats" 
+                  sx={{ backgroundColor: '#e8f5e9' }}
+                />
                 <CardContent>
-                  <Typography variant="body2">
-                    Pending Incidents: {stats?.pendingIncidents || 0}
-                  </Typography>
-                  <Typography variant="body2">
-                    Verified Voters: {stats?.verifiedVoters || 0}
-                  </Typography>
-                  <Typography variant="body2">
-                    Total Incidents: {stats?.totalIncidents || 0}
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2">Pending Incidents:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{stats?.pendingIncidents || 0}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2">Verified Voters:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{stats?.verifiedVoters || 0}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2">Total Incidents:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{stats?.totalIncidents || 0}</Typography>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
         )}
 
-        {/* Elections Tab */}
         {tabValue === 1 && (
           <Box>
-            <Typography variant="h5">Manage Elections ({elections.length})</Typography>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-                <CircularProgress />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5">Manage Elections ({elections.length})</Typography>
+              <Box>
+                
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setShowElectionForm(true)}
+                  sx={{ 
+                    backgroundColor: '#008751',
+                    '&:hover': {
+                      backgroundColor: '#006633'
+                    },
+                    borderRadius: 2
+                  }}
+                >
+                  Create Election
+                </Button>
               </Box>
-            ) : (
-              <Alert severity="info">Elections tab is working</Alert>
-            )}
-          </Box>
-        )}
-
-        {/* Voters Tab */}
-        {tabValue === 2 && (
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h5">Voter Management</Typography>
             </Box>
 
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                 <CircularProgress />
               </Box>
+            ) : elections.length === 0 ? (
+              <Alert severity="info">No elections found.</Alert>
             ) : (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Phone</TableCell>
-                      <TableCell>Voter ID</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {voters.map((voter) => (
-                      <TableRow key={voter.user.id}>
-                        <TableCell>{voter.user.name}</TableCell>
-                        <TableCell>{voter.user.phone_number}</TableCell>
-                        <TableCell>{voter.voter_id}</TableCell>
-                        <TableCell>
-                          {voter.registration_verified ? (
-                            <Chip icon={<Verified />} label="Verified" color="success" size="small" />
-                          ) : (
-                            <Chip icon={<Cancel />} label="Pending" color="warning" size="small" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {!voter.registration_verified && (
-                              <>
-                                <Button size="small" onClick={async () => handleVerifyVoter(voter.voter_id)}>
-                                  Verify
-                                </Button>
-                                <Button size="small" color="error" onClick={async () => {
-                                  setConfirmAction('cancel')
-                                  setConfirmPayload(voter.voter_id)
-                                  setConfirmOpen(true)
-                                }} sx={{ ml: 1 }}>
-                                  Cancel
-                                </Button>
-                              </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Grid container spacing={3}>
+                {elections.map((election) => (
+                  <Grid item xs={12} key={election.election_id}>
+                    <Card sx={{ 
+                      boxShadow: 4, 
+                      borderRadius: 3,
+                      border: '1px solid #e0e0e0',
+                      backgroundColor: '#fafafa',
+                      '&:hover': {
+                        boxShadow: 6,
+                        transform: 'translateY(-2px)',
+                        transition: 'all 0.3s ease'
+                      }
+                    }}>
+                      <CardHeader
+                        title={
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
+                            {election.title}
+                          </Typography>
+                        }
+                        subheader={
+                          <Typography variant="body2" sx={{ color: '#666' }}>
+                            {election.type.replace('_', ' ')} Election
+                          </Typography>
+                        }
+                        action={
+                          <Chip 
+                            label={election.status} 
+                            color={getStatusColor(election.status)} 
+                            size="small"
+                            sx={{ 
+                              fontWeight: 'bold',
+                              fontSize: '0.8rem',
+                              minWidth: '80px'
+                            }}
+                          />
+                        }
+                        sx={{ 
+                          backgroundColor: '#f0f0f0',
+                          borderBottom: '1px solid #e0e0e0',
+                          pb: 1
+                        }}
+                      />
+                      <CardContent>
+                        <Typography variant="body1" color="text.primary" component="div" sx={{ minHeight: '60px', mb: 1 }}>
+                          {election.description || 'No description provided'}
+                        </Typography>
+                        
+                        <Box className="election-dates" sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                          <ActionButton startIcon={<People />} onClick={() => setShowCreateInecDialog(true)}>Create INEC Official</ActionButton>
+                        </Box>
+                        
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                          <Grid item xs={6} sm={3}>
+                            <Paper sx={{ p: 2, textAlign: 'center', boxShadow: 2, backgroundColor: '#e8f5e9' }}>
+                              <Typography variant="h5" sx={{ color: '#008751', fontWeight: 'bold' }}>
+                                {election.candidates?.length || 0}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#333', fontWeight: 'medium' }}>
+                                Candidates
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                          <Grid item xs={6} sm={3}>
+                            <Paper sx={{ p: 2, textAlign: 'center', boxShadow: 2, backgroundColor: '#e3f2fd' }}>
+                              <Typography variant="h5" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
+                                {election.vote_count || 0}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#333', fontWeight: 'medium' }}>
+                                Total Votes
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                          <Grid item xs={6} sm={3}>
+                            <Paper sx={{ p: 2, textAlign: 'center', boxShadow: 2, backgroundColor: election.status === 'ongoing' ? '#e8f5e9' : '#f5f5f5' }}>
+                              <Typography variant="h5" sx={{ color: election.status === 'ongoing' ? '#4caf50' : '#9e9e9e', fontWeight: 'bold' }}>
+                                {election.status === 'ongoing' ? 'Live' : 'Not Live'}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#333', fontWeight: 'medium' }}>
+                                Status
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                          <Grid item xs={6} sm={3}>
+                            <Paper sx={{ p: 2, textAlign: 'center', boxShadow: 2, backgroundColor: '#fff3e0' }}>
+                              <Typography variant="h6" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                                {election.created_by?.name || 'Unknown'}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#333', fontWeight: 'medium' }}>
+                                Created By
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                        </Grid>
+                        
+                        {election.candidates && election.candidates.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle1" gutterBottom className="candidates-heading" sx={{ fontWeight: 'bold', color: '#333', mb: 2 }}>
+                              Candidates:
+                            </Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ boxShadow: 2 }}>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow sx={{ backgroundColor: '#008751' }}>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Party</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Position</TableCell>
+                                    <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold' }}>Votes</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {election.candidates.map((candidate) => (
+                                    <TableRow 
+                                      key={candidate.candidate_id}
+                                      sx={{ 
+                                        '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' },
+                                        '&:hover': { backgroundColor: '#e8f5e9' }
+                                      }}
+                                    >
+                                      <TableCell sx={{ fontWeight: 'medium' }}>{candidate.name}</TableCell>
+                                      <TableCell>
+                                        <Chip 
+                                          label={candidate.party} 
+                                          size="small" 
+                                          sx={{ 
+                                            backgroundColor: '#e3f2fd',
+                                            color: '#1976d2',
+                                            fontWeight: 'bold'
+                                          }} 
+                                        />
+                                      </TableCell>
+                                      <TableCell>{candidate.position}</TableCell>
+                                      <TableCell align="right" sx={{ fontWeight: 'bold', color: '#008751' }}>
+                                        {candidate.vote_count !== undefined ? candidate.vote_count : 'N/A'}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </Box>
+                        )}
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<Add />}
+                            onClick={() => {
+                              setCandidateForm(prev => ({ ...prev, election: election.election_id }))
+                              setShowCandidateForm(true)
+                            }}
+                            sx={{ 
+                              mr: 1,
+                              backgroundColor: '#008751',
+                              '&:hover': {
+                                backgroundColor: '#006633'
+                              },
+                              borderRadius: 2
+                            }}
+                          >
+                            Add Candidate
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="error"
+                            startIcon={<Delete />}
+                            onClick={() => handleDeleteElection(election.election_id)}
+                            sx={{ 
+                              backgroundColor: '#f44336',
+                              '&:hover': {
+                                backgroundColor: '#d32f2f'
+                              },
+                              borderRadius: 2
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
             )}
           </Box>
         )}
 
-        {/* Incidents Tab */}
-        {tabValue === 3 && (
+        {tabValue === 2 && (
           <Box>
-            <Typography variant="h5" gutterBottom>Incident Management</Typography>
-            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5">Voter Management</Typography>
+              
+            </Box>
+
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                 <CircularProgress />
               </Box>
+            ) : voters.length === 0 ? (
+              <Alert severity="info">No voters found.</Alert>
             ) : (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell>Location</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Priority</TableCell>
-                      {(isAdmin || isInec) && <TableCell>Actions</TableCell>}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {incidents.map((incident) => (
-                      <TableRow key={incident.report_id}>
-                        <TableCell>{incident.incident_type.replace('_', ' ')}</TableCell>
-                        <TableCell>{incident.description.substring(0, 50)}...</TableCell>
-                        <TableCell>{incident.location || 'Not specified'}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={incident.status} 
-                            color={
-                              incident.status === 'resolved' ? 'success' : 
-                              incident.status === 'pending' ? 'warning' : 'default'
-                            }
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={incident.priority} 
-                            color={
-                              incident.priority === 'critical' ? 'error' : 
-                              incident.priority === 'high' ? 'warning' : 'default'
-                            }
-                            size="small"
-                          />
-                        </TableCell>
-                        {(isAdmin || isInec) && (
-                          <TableCell>
-                            <Button size="small" onClick={async () => {
-                              try {
-                                if (isInec) {
-                                  await incidentsAPI.assignIncident(incident.report_id, user.user_id)
-                                  setSuccess('Incident assigned to you.')
-                                }
-                                // Refresh incidents
-                                await loadIncidents()
-                              } catch (e) {
-                                if (e.response?.status === 403) {
-                                  const assignedName = e.response?.data?.assigned_to_name || null
-                                  if (assignedName) {
-                                    setError(`This incident is already assigned to ${assignedName}. Only admins can reassign.`)
-                                  } else {
-                                    setError('This incident is already assigned to another official and cannot be reassigned.')
-                                  }
-                                } else {
-                                  setError('Failed to assign incident: ' + (e.response?.data || e.message))
-                                }
-                              }
-                            }}>
-                              Assign to me
-                            </Button>
-                            <Button size="small" onClick={async () => {
-                              try {
-                                const next = incident.status === 'pending' ? 'investigating' : (incident.status === 'investigating' ? 'resolved' : 'resolved')
-                                await incidentsAPI.updateIncidentStatus(incident.report_id, { status: next, resolution_notes: next === 'resolved' ? 'Resolved via Admin Dashboard' : '' })
-                                setSuccess('Incident status updated.')
-                                await loadIncidents()
-                              } catch (e) {
-                                setError('Failed to update incident status: ' + (e.response?.data || e.message))
-                              }
-                            }} sx={{ ml: 1 }}>
-                              Update Status
-                            </Button>
-                          </TableCell>
-                        )}
+              <Card className="soft-card" sx={{ boxShadow: 3, borderRadius: 2 }}>
+                <CardHeader 
+                  title="Registered Voters" 
+                  sx={{ backgroundColor: '#e8f5e9' }}
+                />
+                <TableContainer component={Paper} variant="outlined">
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#008751' }}>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Phone Number</TableCell>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Age</TableCell>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Registration Status</TableCell>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Voting Eligibility</TableCell>
+                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {voters.map((voter) => (
+            <TableRow 
+              key={voter.voter_id || voter.id}
+                          sx={{ 
+                            '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' },
+                            '&:hover': { backgroundColor: '#e8f5e9' }
+                          }}
+                        >
+                          <TableCell sx={{ fontWeight: 'medium' }}>{(voter.user && (voter.user.name || voter.user.full_name)) || voter.name || 'Unknown'}</TableCell>
+                          <TableCell>{(voter.user && voter.user.phone_number) || voter.phone_number || 'N/A'}</TableCell>
+                          <TableCell>
+                            {(() => {
+                              // Prefer server-provided age if present
+                              const userObj = voter.user || {}
+                              if (userObj.age !== undefined && userObj.age !== null) return userObj.age
+                              // Fallback: compute from dob if available
+                              if (userObj.dob) {
+                                try {
+                                  const dob = new Date(userObj.dob)
+                                  const today = new Date()
+                                  let age = today.getFullYear() - dob.getFullYear()
+                                  const m = today.getMonth() - dob.getMonth()
+                                  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
+                                  return age
+                                } catch (e) {
+                                  return 'N/A'
+                                }
+                              }
+                              return 'N/A'
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={voter.registration_verified ? 'Verified' : 'Pending'}
+                              color={voter.registration_verified ? 'success' : 'warning'}
+                              size="small"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={voter.can_vote ? 'Eligible' : 'Not Eligible'}
+                              color={voter.can_vote ? 'success' : 'error'}
+                              size="small"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {!voter.registration_verified ? (
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  startIcon={<Verified />}
+                                  onClick={() => handleVerifyVoter(voter.voter_id)}
+                                  sx={{ 
+                                    backgroundColor: '#4caf50',
+                                    '&:hover': {
+                                      backgroundColor: '#388e3c'
+                                    },
+                                    borderRadius: 2
+                                  }}
+                                >
+                                  Verify
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => {
+                                    setConfirmAction('cancel')
+                                    setConfirmPayload(voter.voter_id)
+                                    setConfirmOpen(true)
+                                  }}
+                                  sx={{ borderRadius: 2 }}
+                                >
+                                  Reject
+                                </Button>
+                              </Box>
+                            ) : (
+                              <Chip 
+                                label="Verified" 
+                                color="success" 
+                                size="small"
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Card>
             )}
           </Box>
         )}
 
-        {/* Reports Tab */}
-        {tabValue === 4 && (
+        {tabValue === 3 && (
           <Box>
-            <Typography variant="h5" gutterBottom>Reports & Analytics</Typography>
-            <Alert severity="info">
-              Detailed reporting and analytics features will be implemented here.
-            </Alert>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5">Incident Reports ({incidents.length})</Typography>
+              
+            </Box>
+
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                <CircularProgress />
+              </Box>
+            ) : incidents.length === 0 ? (
+              <Alert severity="info">No incidents reported.</Alert>
+            ) : (
+              <Grid container spacing={3}>
+                {incidents.map((incident, _idx) => (
+                  <Grid item xs={12} key={incident.id ?? incident.incident_id ?? `incident-${_idx}`}>
+                    <Card sx={{ 
+                      boxShadow: 3, 
+                      borderRadius: 2,
+                      borderLeft: incident.status === 'pending' ? '4px solid #ff9800' : 
+                                  incident.status === 'resolved' ? '4px solid #4caf50' : 
+                                  '4px solid #f44336',
+                      backgroundColor: '#fafafa'
+                    }}>
+                      <CardHeader
+                        title={
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
+                            {incident.title}
+                          </Typography>
+                        }
+                        subheader={
+                          <Typography variant="body2" sx={{ color: '#666' }}>
+                            Reported by {incident.reported_by?.name || 'Unknown'} on {new Date(incident.created_at).toLocaleString()}
+                          </Typography>
+                        }
+                        action={
+                          <Chip 
+                            label={incident.status} 
+                            color={
+                              incident.status === 'pending' ? 'warning' : 
+                              incident.status === 'resolved' ? 'success' : 'error'
+                            } 
+                            size="small"
+                            sx={{ 
+                              fontWeight: 'bold',
+                              fontSize: '0.8rem'
+                            }}
+                          />
+                        }
+                        sx={{ 
+                          backgroundColor: '#f0f0f0',
+                          borderBottom: '1px solid #e0e0e0'
+                        }}
+                      />
+                      <CardContent>
+                        <Typography variant="body1" color="text.primary" component="div" sx={{ mb: 1 }}>
+                          {incident.description}
+                        </Typography>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                          <Chip 
+                            label={incident.election?.title || 'No Election'} 
+                            size="small" 
+                            sx={{ 
+                              backgroundColor: '#e3f2fd',
+                              color: '#1976d2',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                          <Chip 
+                            label={incident.category} 
+                            size="small" 
+                            sx={{ 
+                              backgroundColor: '#fff3e0',
+                              color: '#f57c00',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                        </Box>
+                        
+                        {incident.evidence_files && incident.evidence_files.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>Evidence:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {incident.evidence_files.map((file) => (
+                                <Chip 
+                                  key={file}
+                                  label={file.split('/').pop()}
+                                  size="small"
+                                  sx={{ 
+                                    backgroundColor: '#e8f5e9',
+                                    color: '#2e7d32',
+                                    fontWeight: 'bold'
+                                  }} 
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Box>
         )}
 
-        {/* Create Election Dialog */}
+        {tabValue === 4 && (
+          <Box>
+            <Typography variant="h5" gutterBottom>Reports & Analytics</Typography>
+
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} md={3}>
+                <Paper className="soft-card" sx={{ p: 2, boxShadow: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary">Total Elections</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#008751' }}>{stats.totalElections || 0}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Paper className="soft-card" sx={{ p: 2, boxShadow: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary">Active Elections</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#ff9800' }}>{stats.activeElections || 0}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Paper className="soft-card" sx={{ p: 2, boxShadow: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary">Total Voters</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2196f3' }}>{stats.totalVoters || 0}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Paper className="soft-card" sx={{ p: 2, boxShadow: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary">Pending Incidents</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f44336' }}>{stats.pendingIncidents || 0}</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Card className="soft-card" sx={{ boxShadow: 3, mb: 3 }}>
+              <CardHeader title="Recent Incidents" />
+              <CardContent>
+                {incidents.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">No incidents reported.</Typography>
+                ) : (
+                  <List>
+                    {incidents.slice(0, 6).map((inc, _i) => (
+                      <ListItem key={inc.id ?? inc.incident_id ?? `inc-${_i}`} divider>
+                        <ListItemText
+                          primary={inc.title || inc.incident_type}
+                          secondary={
+                            <>
+                              <Typography component="span" variant="body2" color="text.secondary">
+                                {inc.description?.substring(0, 80) || ''}
+                              </Typography>
+                              <br />
+                              <Typography component="span" variant="caption" color="text.secondary">
+                                {inc.election?.title ? `Election: ${inc.election.title} • ` : ''}{new Date(inc.created_at).toLocaleString()}
+                              </Typography>
+                            </>
+                          }
+                        />
+                        <Chip label={inc.status} size="small" sx={{ ml: 2 }} />
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="soft-card" sx={{ boxShadow: 3 }}>
+              <CardHeader title="Incidents by Status" />
+              <CardContent>
+                {incidents.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">No incident data to display.</Typography>
+                ) : (
+                  (() => {
+                    const counts = incidents.reduce((acc, it) => {
+                      const s = it.status || 'unknown'
+                      acc[s] = (acc[s] || 0) + 1
+                      return acc
+                    }, {})
+                    const entries = Object.entries(counts)
+                    const total = entries.reduce((s, [, v]) => s + v, 0)
+                    const colorMap = {
+                      pending: '#ff9800',
+                      investigating: '#ffb300',
+                      resolved: '#4caf50',
+                      dismissed: '#9e9e9e',
+                      unknown: '#90a4ae'
+                    }
+
+                    return (
+                      <Box>
+                        {entries.map(([status, cnt]) => {
+                          const pct = Math.round((cnt / total) * 100)
+                          const color = colorMap[status] || '#607d8b'
+                          return (
+                            <Box key={status} sx={{ mb: 1 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{status.replace('_', ' ')}</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{cnt} ({pct}%)</Typography>
+                              </Box>
+                              <Paper variant="outlined" sx={{ height: 12, borderRadius: 6, overflow: 'hidden' }}>
+                                <Box sx={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg, ${color}, ${color}99)` }} />
+                              </Paper>
+                            </Box>
+                          )
+                        })}
+                        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          {entries.map(([status]) => (
+                            <Chip key={status} label={status} size="small" sx={{ backgroundColor: colorMap[status] || '#607d8b', color: 'white', fontWeight: 'bold' }} />
+                          ))}
+                        </Box>
+                      </Box>
+                    )
+                  })()
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
         <Dialog open={showElectionForm} onClose={() => setShowElectionForm(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Create New Election</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Election Title"
-                  name="title"
-                  value={electionForm.title}
-                  onChange={handleElectionFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Election Type</InputLabel>
-                  <Select
-                    name="type"
-                    value={electionForm.type}
-                    onChange={handleElectionFormChange}
-                    label="Election Type"
-                  >
-                    <MenuItem value="presidential">Presidential</MenuItem>
-                    <MenuItem value="gubernatorial">Gubernatorial</MenuItem>
-                    <MenuItem value="senatorial">Senatorial</MenuItem>
-                    <MenuItem value="house_of_reps">House of Representatives</MenuItem>
-                    <MenuItem value="house_of_assembly">House of Assembly</MenuItem>
-                    <MenuItem value="local_government">Local Government</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="Description"
-                  name="description"
-                  value={electionForm.description}
-                  onChange={handleElectionFormChange}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Start Date"
-                  type="datetime-local"
-                  name="start_date"
-                  value={electionForm.start_date}
-                  onChange={handleElectionFormChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="End Date"
-                  type="datetime-local"
-                  name="end_date"
-                  value={electionForm.end_date}
-                  onChange={handleElectionFormChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowElectionForm(false)}>Cancel</Button>
-            <Button 
-              onClick={handleCreateElection} 
-              variant="contained" 
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Create Election'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Create Admin Dialog (Superuser only) */}
-        <Dialog open={showCreateAdminDialog} onClose={() => setShowCreateAdminDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Create Admin</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Name" name="name" value={createForm.name} onChange={handleCreateFormChange} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Phone Number" name="phone_number" value={createForm.phone_number} onChange={handleCreateFormChange} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Password" name="password" type="password" value={createForm.password} onChange={handleCreateFormChange} />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowCreateAdminDialog(false)}>Cancel</Button>
-            <Button onClick={() => {
-              // open confirmation before creating
-              setShowCreateAdminDialog(false)
-              setConfirmAction('create_admin')
-              setConfirmPayload({ ...createForm })
-              setConfirmOpen(true)
-            }} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create Admin'}</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Create INEC Official Dialog (Superuser/Admin) */}
-        <Dialog open={showCreateInecDialog} onClose={() => setShowCreateInecDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Create INEC Official</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Name" name="name" value={createForm.name} onChange={handleCreateFormChange} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Phone Number" name="phone_number" value={createForm.phone_number} onChange={handleCreateFormChange} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Password" name="password" type="password" value={createForm.password} onChange={handleCreateFormChange} />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowCreateInecDialog(false)}>Cancel</Button>
-            <Button onClick={() => {
-              // open confirmation before creating
-              setShowCreateInecDialog(false)
-              setConfirmAction('create_inec')
-              setConfirmPayload({ ...createForm })
-              setConfirmOpen(true)
-            }} variant="contained" disabled={loading}>{loading ? <CircularProgress size={20} /> : 'Create INEC Official'}</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Confirm Action Dialog (shared for Verify/Cancel) */}
-        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle>Confirm action</DialogTitle>
-          <DialogContent>
-            <Typography>
-              {confirmAction === 'verify' ? 'Are you sure you want to verify this voter? This will allow them to vote.' : 'Are you sure you want to cancel this voter registration?'}
+          <DialogTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: '#333' }}>
+              Create New Election
             </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="Election Title"
+              name="title"
+              value={electionForm.title}
+              onChange={handleElectionFormChange}
+              margin="normal"
+              required
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Election Type</InputLabel>
+              <Select
+                name="type"
+                value={electionForm.type}
+                onChange={handleElectionFormChange}
+                required
+              >
+                <MenuItem value="presidential">Presidential</MenuItem>
+                <MenuItem value="governorship">Governorship</MenuItem>
+                <MenuItem value="senatorial">Senatorial</MenuItem>
+                <MenuItem value="house_of_representatives">House of Representatives</MenuItem>
+                <MenuItem value="state_assembly">State Assembly</MenuItem>
+                <MenuItem value="local_government">Local Government</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Description"
+              name="description"
+              value={electionForm.description}
+              onChange={handleElectionFormChange}
+              margin="normal"
+              multiline
+              rows={3}
+            />
+            <TextField
+              fullWidth
+              label="Start Date"
+              name="start_date"
+              type="datetime-local"
+              value={electionForm.start_date}
+              onChange={handleElectionFormChange}
+              margin="normal"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="End Date"
+              name="end_date"
+              type="datetime-local"
+              value={electionForm.end_date}
+              onChange={handleElectionFormChange}
+              margin="normal"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              required
+            />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmOpen(false)}>No</Button>
-            <Button onClick={async () => {
+            <ActionButton variant="text" scheme="cancel" onClick={() => setShowElectionForm(false)} sx={{ px: 2, py: 0.5, fontWeight: 600 }}>Cancel</ActionButton>
+            <ActionButton onClick={handleCreateElection} disabled={loading}>{loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Create Election'}</ActionButton>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={showCandidateForm} onClose={() => setShowCandidateForm(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: '#333' }}>
+              Add Candidate
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="Candidate Name"
+              name="name"
+              value={candidateForm.name}
+              onChange={handleCandidateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Political Party"
+              name="party"
+              value={candidateForm.party}
+              onChange={handleCandidateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Position"
+              name="position"
+              value={candidateForm.position}
+              onChange={handleCandidateFormChange}
+              margin="normal"
+              required
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Select Election</InputLabel>
+              <Select
+                name="election"
+                value={candidateForm.election}
+                onChange={handleCandidateFormChange}
+                required
+              >
+                {elections.map((election) => (
+                  <MenuItem key={election.election_id} value={election.election_id}>
+                    {election.title} ({election.type.replace('_', ' ')})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Biography"
+              name="biography"
+              value={candidateForm.biography}
+              onChange={handleCandidateFormChange}
+              margin="normal"
+              multiline
+              rows={4}
+            />
+            <input
+              accept="image/*"
+              type="file"
+              onChange={handleCandidatePhotoChange}
+              style={{ marginTop: '16px' }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <ActionButton variant="text" scheme="cancel" onClick={() => setShowCandidateForm(false)} sx={{ px: 2, py: 0.5, fontWeight: 600 }}>Cancel</ActionButton>
+            <ActionButton onClick={handleCreateCandidate} disabled={loading}>{loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Add Candidate'}</ActionButton>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={showCreateAdminDialog} onClose={() => setShowCreateAdminDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: '#333' }}>
+              Create New Admin
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="Full Name"
+              name="name"
+              value={createForm.name}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Phone Number"
+              name="phone_number"
+              value={createForm.phone_number}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type="password"
+              value={createForm.password}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+          </DialogContent>
+          <DialogActions>
+            <ActionButton variant="text" scheme="cancel" onClick={() => setShowCreateAdminDialog(false)} sx={{ px: 2, py: 0.5, fontWeight: 600 }}>Cancel</ActionButton>
+            <ActionButton onClick={handleCreateAdmin} disabled={loading}>{loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Create Admin'}</ActionButton>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={showCreateInecDialog} onClose={() => setShowCreateInecDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: '#333' }}>
+              Create INEC Official
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="Full Name"
+              name="name"
+              value={createForm.name}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Phone Number"
+              name="phone_number"
+              value={createForm.phone_number}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type="password"
+              value={createForm.password}
+              onChange={handleCreateFormChange}
+              margin="normal"
+              required
+            />
+          </DialogContent>
+          <DialogActions>
+            <ActionButton variant="text" scheme="cancel" onClick={() => setShowCreateInecDialog(false)} sx={{ px: 2, py: 0.5, fontWeight: 600 }}>Cancel</ActionButton>
+            <ActionButton onClick={handleCreateInec} disabled={loading}>{loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Create Official'}</ActionButton>
+          </DialogActions>
+        </Dialog>
+        
+        {/* Confirmation dialog for verify/cancel actions */}
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: '#333' }}>
+              Confirm Action
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to {confirmAction === 'verify' ? 'verify' : 'cancel'} this voter?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)} sx={{ color: '#666' }}>No</Button>
+            <ActionButton onClick={async () => {
               setConfirmOpen(false)
               setLoading(true)
+              setError('')
               try {
                 if (confirmAction === 'verify') {
-                  const resp = await authAPI.verifyVoter(confirmPayload)
-                  setSuccess(resp.data?.message || 'Voter verified successfully!')
+                  await authAPI.verifyVoter(confirmPayload)
+                  setSuccess('Voter verified successfully')
                 } else if (confirmAction === 'cancel') {
-                  const resp = await authAPI.cancelVoter(confirmPayload)
-                  setSuccess(resp.data?.message || 'Voter registration cancelled')
-                } else if (confirmAction === 'create_admin') {
-                  const resp = await authAPI.createAdmin(confirmPayload)
-                  setSuccess(resp.data?.message || 'Admin created successfully')
-                  // clear create form
-                  setCreateForm({ name: '', phone_number: '', password: '' })
-                } else if (confirmAction === 'create_inec') {
-                  const resp = await authAPI.createInecOfficial(confirmPayload)
-                  setSuccess(resp.data?.message || 'INEC Official created successfully')
-                  setCreateForm({ name: '', phone_number: '', password: '' })
+                  await authAPI.cancelVoter(confirmPayload)
+                  setSuccess('Voter verification cancelled')
                 }
-
                 await Promise.all([loadVoters(), loadDashboardStats()])
               } catch (e) {
-                setError((e.response?.data?.error || e.response?.data?.message) || e.message || 'Action failed')
+                console.error('Confirm action failed', e)
+                // Normalize error into a string to avoid React rendering an object
+                let errMsg = 'Action failed'
+                if (e?.response?.data) {
+                  if (typeof e.response.data === 'string') errMsg = e.response.data
+                  else if (e.response.data.error) errMsg = e.response.data.error
+                  else errMsg = JSON.stringify(e.response.data)
+                } else if (e?.message) {
+                  errMsg = e.message
+                }
+                setError(errMsg)
               } finally {
                 setLoading(false)
-                setConfirmAction(null)
-                setConfirmPayload(null)
               }
-            }} variant="contained">Yes</Button>
+            }}>
+              Yes
+            </ActionButton>
           </DialogActions>
         </Dialog>
-
-        {/* Create Candidate Dialog */}
-        <Dialog open={showCandidateForm} onClose={() => setShowCandidateForm(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Add New Candidate</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Candidate Name"
-                  name="name"
-                  value={candidateForm.name}
-                  onChange={handleCandidateFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Political Party"
-                  name="party"
-                  value={candidateForm.party}
-                  onChange={handleCandidateFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Position"
-                  name="position"
-                  value={candidateForm.position}
-                  onChange={handleCandidateFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Election</InputLabel>
-                  <Select
-                    name="election"
-                    value={candidateForm.election}
-                    onChange={handleCandidateFormChange}
-                    label="Election"
-                  >
-                    {elections.map((election) => (
-                      <MenuItem key={election.election_id} value={election.election_id}>
-                        {election.title} — {String(election.type).replace('_', ' ')}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Biography"
-                  name="biography"
-                  value={candidateForm.biography}
-                  onChange={handleCandidateFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <input
-                  accept="image/*"
-                  id="candidate-photo"
-                  type="file"
-                  style={{ display: 'block' }}
-                  onChange={handleCandidatePhotoChange}
-                />
-                {candidateForm.photo && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2">Selected photo preview:</Typography>
-                    <Box component="img" src={typeof candidateForm.photo === 'string' ? candidateForm.photo : URL.createObjectURL(candidateForm.photo)} alt="Selected" sx={{ width: 160, height: 160, objectFit: 'cover', borderRadius: 1, mt: 1 }} />
-                  </Box>
-                )}
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowCandidateForm(false)}>Cancel</Button>
-            <Button 
-              onClick={handleCreateCandidate} 
-              variant="contained" 
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Add Candidate'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Floating Action Button - opens Candidate form */}
-        <Fab
-          color="primary"
-          aria-label="add-candidate"
-          sx={{ 
-            position: 'fixed', 
-            bottom: 16, 
-            right: 16,
-            display: 'flex'
-          }}
-          onClick={() => setShowCandidateForm(true)}
-        >
-          <Add />
-        </Fab>
       </Container>
     </Layout>
     </ErrorBoundary>

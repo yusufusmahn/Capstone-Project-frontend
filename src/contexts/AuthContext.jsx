@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { authAPI } from '../services/api'
 
-const AuthContext = createContext()
+export const AuthContext = createContext(null)
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
@@ -11,14 +11,14 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
+  const token = localStorage.getItem('auth_token')
     if (token) {
       authAPI.setAuthToken(token)
       loadUserProfile()
@@ -27,17 +27,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  // Poll profile if logged-in voter is pending verification so their dashboard updates automatically
   useEffect(() => {
     if (!user || user.role !== 'voter') return
     if (profile && profile.registration_verified) return
 
     let attempts = 0
-    const maxAttempts = 30 // ~4 minutes
+    const maxAttempts = 30
     const interval = setInterval(async () => {
       attempts += 1
+
       try {
         const response = await authAPI.getProfile()
+
         setUser(response.data.user)
         setProfile(response.data.profile)
         if (response.data.profile && response.data.profile.registration_verified) {
@@ -55,8 +56,10 @@ export const AuthProvider = ({ children }) => {
   }, [user, profile])
 
   const loadUserProfile = async () => {
+
     try {
       const response = await authAPI.getProfile()
+
       setUser(response.data.user)
       setProfile(response.data.profile)
       setIsAuthenticated(true)
@@ -68,13 +71,13 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Role helper booleans for easy checks across the app
   const isSuperuser = !!user?.is_superuser
   const isAdmin = user?.role === 'admin' || isSuperuser
   const isInec = user?.role === 'inec_official'
   const isVoter = user?.role === 'voter'
 
   const login = async (credentials) => {
+
     try {
       const response = await authAPI.login(credentials)
       const { user, profile, token, verification_status } = response.data
@@ -107,6 +110,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const register = async (userData) => {
+
     try {
       const response = await authAPI.register(userData)
       const { user, profile, token, message, status } = response.data
@@ -141,13 +145,13 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
+
     localStorage.removeItem('auth_token')
     authAPI.removeAuthToken()
     setUser(null)
     setProfile(null)
     setIsAuthenticated(false)
   }
-
 
   const value = {
     user,

@@ -42,7 +42,6 @@ const PasswordReset = () => {
     setError('')
     setSuccess('')
 
-    // Validate passwords match
     if (formData.new_password !== formData.confirm_password) {
       setError('Passwords do not match')
       setLoading(false)
@@ -56,8 +55,7 @@ const PasswordReset = () => {
         confirm_password: formData.confirm_password
       })
       setSuccess(response.data.message)
-      
-      // Redirect to login after 3 seconds
+
       setTimeout(() => {
         navigate('/login')
       }, 3000)

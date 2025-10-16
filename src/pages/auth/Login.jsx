@@ -11,10 +11,13 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Visibility, VisibilityOff, Phone, Lock } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 
 const Login = () => {
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
   const [formData, setFormData] = useState({
     phone_number: '',
     password: ''
@@ -57,7 +60,7 @@ const Login = () => {
   }
 
   return (
-    <Box
+    <Box className="auth-page"
       sx={{
         minHeight: '100vh',
         display: 'flex',
@@ -74,8 +77,8 @@ const Login = () => {
             alignItems: 'center',
           }}
         >
-          <Paper elevation={6} sx={{ padding: 4, width: '100%', borderRadius: 2 }}>
-            <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ color: '#008751', fontWeight: 'bold' }}>
+          <Paper elevation={6} className="auth-paper" sx={{ padding: 4, width: '100%', borderRadius: 2 }}>
+            <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ color: isDark ? theme.palette.text.primary : '#008751', fontWeight: 'bold' }}>
               Voting System Login
             </Typography>
             
@@ -100,7 +103,7 @@ const Login = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Phone sx={{ color: '#008751' }} />
+                      <Phone sx={{ color: isDark ? theme.palette.text.primary : '#008751' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -120,7 +123,7 @@ const Login = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Lock sx={{ color: '#008751' }} />
+                      <Lock sx={{ color: isDark ? theme.palette.text.primary : '#008751' }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -128,6 +131,7 @@ const Login = () => {
                       <IconButton
                         aria-label="toggle password visibility"
                         onClick={() => setShowPassword(!showPassword)}
+                        sx={{ color: isDark ? theme.palette.text.primary : undefined }}
                         edge="end"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -156,13 +160,7 @@ const Login = () => {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
               
-              <Box textAlign="center" sx={{ mb: 2 }}>
-                <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
-                  <Typography variant="body2" sx={{ color: '#008751', fontWeight: 'medium' }}>
-                    Forgot Password?
-                  </Typography>
-                </Link>
-              </Box>
+              {/* Forgot password temporarily removed */}
               
               <Box textAlign="center">
                 <Link to="/register" style={{ textDecoration: 'none' }}>

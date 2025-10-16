@@ -28,19 +28,21 @@ import {
   Settings,
   ExitToApp
 } from '@mui/icons-material'
+import { Brightness4, Brightness7 } from '@mui/icons-material'
+import { useThemeMode } from '../../contexts/ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+
 
 const drawerWidth = 240
 
 const getNavigationItems = (userRole, helpers = {}) => {
+  // getNavigationItems
   const items = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/' },
   ]
 
-  // Prefer explicit helpers when available for consistency
   const isVoter = helpers.isVoter || userRole === 'voter'
-  const isAdminOrInec = (helpers.isAdmin || helpers.isInec) || (userRole === 'admin' || userRole === 'inec_official')
 
   if (isVoter) {
     items.push(
@@ -48,7 +50,7 @@ const getNavigationItems = (userRole, helpers = {}) => {
       { text: 'Results', icon: <BarChart />, path: '/results' },
       { text: 'Report Incident', icon: <Report />, path: '/report-incident' }
     )
-  } else if (userRole === 'admin' || userRole === 'inec_official') {
+  } else if (userRole === 'admin') {
     items.push(
       { text: 'Admin Dashboard', icon: <Settings />, path: '/admin' }
     )
@@ -62,6 +64,8 @@ export const Layout = ({ children }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   
   const { user, logout, isAdmin, isInec, isVoter } = useAuth()
+  const { mode, toggle } = useThemeMode()
+  
   const navigate = useNavigate()
   const location = useLocation()
   const theme = useTheme()
@@ -69,17 +73,11 @@ export const Layout = ({ children }) => {
 
   const navigationItems = getNavigationItems(user?.role, { isAdmin, isInec, isVoter })
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen)
-  }
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen)
 
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
+  const handleProfileMenuOpen = (event) => setAnchorEl(event.currentTarget)
 
-  const handleProfileMenuClose = () => {
-    setAnchorEl(null)
-  }
+  const handleProfileMenuClose = () => setAnchorEl(null)
 
   const handleLogout = () => {
     handleProfileMenuClose()
@@ -89,19 +87,18 @@ export const Layout = ({ children }) => {
 
   const handleNavigation = (path) => {
     navigate(path)
-    if (isMobile) {
-      setMobileOpen(false)
-    }
+    if (isMobile) setMobileOpen(false)
   }
 
   const drawer = (
     <div>
       <Toolbar sx={{ 
-        backgroundColor: '#008751',
-        color: 'white',
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.getContrastText(theme.palette.primary.main),
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        minHeight: { xs: '56px', md: '64px' }
       }}>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
           Voting System
@@ -115,27 +112,29 @@ export const Layout = ({ children }) => {
               selected={location.pathname === item.path}
               onClick={() => handleNavigation(item.path)}
               sx={{
+                backgroundColor: theme.palette.mode === 'light' ? 'transparent' : undefined,
                 '&.Mui-selected': {
-                  backgroundColor: 'rgba(0, 135, 81, 0.1)',
-                  borderRight: '4px solid #008751',
+                  backgroundColor: theme.palette.mode === 'light' ? 'rgba(255,255,255,0.12)' : 'rgba(0,135,81,0.1)',
+                  borderRight: theme.palette.mode === 'light' ? `4px solid ${theme.palette.primary.dark || '#007a44'}` : '4px solid #008751',
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 135, 81, 0.2)',
+                    backgroundColor: theme.palette.mode === 'light' ? 'rgba(255,255,255,0.14)' : 'rgba(0, 135, 81, 0.2)',
                   }
                 }
               }}
             >
               <ListItemIcon sx={{ 
-                color: location.pathname === item.path ? '#008751' : 'inherit',
+                color: location.pathname === item.path ? (theme.palette.mode === 'light' ? theme.palette.primary.contrastText : '#008751') : (theme.palette.mode === 'light' ? theme.palette.primary.contrastText : 'inherit'),
                 minWidth: '40px'
               }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText 
                 primary={item.text} 
+                primaryTypographyProps={{ component: 'div' }}
                 sx={{ 
                   '& .MuiTypography-root': { 
                     fontWeight: location.pathname === item.path ? 'bold' : 'normal',
-                    color: location.pathname === item.path ? '#008751' : 'inherit'
+                    color: location.pathname === item.path ? (theme.palette.mode === 'light' ? theme.palette.primary.contrastText : '#008751') : (theme.palette.mode === 'light' ? theme.palette.primary.contrastText : 'inherit')
                   } 
                 }} 
               />
@@ -146,6 +145,8 @@ export const Layout = ({ children }) => {
     </div>
   )
 
+  // Rendering Layout component
+
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar
@@ -154,10 +155,13 @@ export const Layout = ({ children }) => {
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
           backgroundColor: '#008751',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px rgba(0,0,0,0.12)',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          opacity: 1
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: { xs: '56px', md: '64px' } }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -168,11 +172,18 @@ export const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Voting System
-          </Typography>
+          {/* spacer to keep right-side controls aligned; the drawer already shows the app name */}
+          <Box sx={{ flexGrow: 1 }} />
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color="inherit"
+              onClick={toggle}
+              sx={{ mr: 1 }}
+              aria-label="toggle theme"
+            >
+              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
             <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
               {user?.name}
             </Typography>
@@ -183,20 +194,8 @@ export const Layout = ({ children }) => {
               aria-haspopup="true"
               onClick={handleProfileMenuOpen}
               color="inherit"
-              sx={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                }
-              }}
             >
-              <Avatar sx={{ 
-                width: 32, 
-                height: 32,
-                backgroundColor: '#ffffff',
-                color: '#008751',
-                fontWeight: 'bold'
-              }}>
+              <Avatar sx={{ width: 32, height: 32, backgroundColor: 'white', color: '#008751', fontWeight: 'bold' }}>
                 {user?.name?.charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
@@ -235,7 +234,8 @@ export const Layout = ({ children }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: '1px solid #e0e0e0'
+              backgroundColor: theme.palette.mode === 'light' ? theme.palette.primary.main : undefined,
+              color: theme.palette.mode === 'light' ? theme.palette.getContrastText(theme.palette.primary.main) : undefined
             },
           }}
         >
@@ -248,8 +248,8 @@ export const Layout = ({ children }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: '1px solid #e0e0e0',
-              backgroundColor: '#fafafa'
+              backgroundColor: theme.palette.mode === 'light' ? theme.palette.primary.main : undefined,
+              color: theme.palette.mode === 'light' ? theme.palette.getContrastText(theme.palette.primary.main) : undefined
             },
           }}
           open
@@ -262,10 +262,11 @@ export const Layout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          px: 3,
+          pb: 3,
+          pt: { xs: '56px', md: '64px' }, // ensure content is pushed below the fixed AppBar
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
-          backgroundColor: '#f5f5f5',
+          backgroundColor: 'transparent',
           minHeight: '100vh'
         }}
       >
@@ -274,3 +275,5 @@ export const Layout = ({ children }) => {
     </Box>
   )
 }
+
+export default Layout

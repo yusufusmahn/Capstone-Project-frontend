@@ -12,9 +12,12 @@ import {
   IconButton
 } from '@mui/material'
 import { Visibility, VisibilityOff, Phone, Person } from '@mui/icons-material'
+import { useTheme } from '@mui/material/styles'
 import { useAuth } from '../../contexts/AuthContext'
 
 const Register = () => {
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
   const [formData, setFormData] = useState({
     name: '',
     phone_number: '',
@@ -131,13 +134,14 @@ const Register = () => {
   }
 
   return (
-    <Box
+    <Box className="auth-page"
       sx={{
-        minHeight: '100vh',
+        minHeight: '80vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(135deg, #008751 0%, #008751 50%, #FFFFFF 50%, #FFFFFF 100%)',
+        px: 2
       }}
     >
       <Container component="main" maxWidth="xs">
@@ -148,8 +152,8 @@ const Register = () => {
             alignItems: 'center',
           }}
         >
-          <Paper elevation={6} sx={{ padding: 3, width: '100%', borderRadius: 2, maxHeight: '80vh', overflow: 'auto' }}>
-            <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ color: '#008751', fontWeight: 'bold' }}>
+          <Paper elevation={6} className="auth-paper" sx={{ padding: 2, width: '100%', maxWidth: 380, mx: 'auto', borderRadius: 2 }}>
+            <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ color: isDark ? theme.palette.text.primary : '#008751', fontWeight: 'bold' }}>
               Register for Voting
             </Typography>
             
@@ -180,7 +184,7 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Person sx={{ color: '#008751' }} />
+                      <Person sx={{ color: isDark ? theme.palette.text.primary : '#008751' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -199,7 +203,7 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Phone sx={{ color: '#008751' }} />
+                      <Phone sx={{ color: isDark ? theme.palette.text.primary : '#008751' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -221,10 +225,10 @@ const Register = () => {
                 helperText="You must be at least 18 years old to register"
                 sx={{ 
                   '& input': { 
-                    color: '#333',
+                    color: isDark ? theme.palette.text.primary : '#333',
                   },
                   '& label': { 
-                    color: '#666',
+                    color: isDark ? theme.palette.text.secondary : '#666',
                   },
                 }}
               />
@@ -245,10 +249,10 @@ const Register = () => {
                 helperText="Enter your 10-character alphanumeric voter ID"
                 sx={{ 
                   '& input': { 
-                    color: '#333',
+                    color: isDark ? theme.palette.text.primary : '#333',
                   },
                   '& label': { 
-                    color: '#666',
+                    color: isDark ? theme.palette.text.secondary : '#666',
                   },
                 }}
               />
@@ -271,6 +275,7 @@ const Register = () => {
                         aria-label="toggle password visibility"
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        sx={{ color: isDark ? theme.palette.text.primary : undefined }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -296,6 +301,7 @@ const Register = () => {
                         aria-label="toggle password visibility"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         edge="end"
+                        sx={{ color: isDark ? theme.palette.text.primary : undefined }}
                       >
                         {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>

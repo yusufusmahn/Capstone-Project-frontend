@@ -1,3 +1,5 @@
+html, #root { height: 100%; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,14 +7,356 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-#root {
   min-height: 100vh;
 }
+
+code { font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace; }
+
+/* Small utility to slightly soften card backgrounds for better contrast */
+.soft-card {
+  background-color: rgba(255,255,255,0.82);
+  -webkit-backdrop-filter: saturate(120%) blur(4px);
+  backdrop-filter: saturate(120%) blur(4px);
+  transition: background-color 160ms ease, backdrop-filter 160ms ease;
+}
+
+/* Dark mode overrides for non-MUI elements */
+[data-theme='dark'] .soft-card {
+  background-color: rgba(10,18,25,0.65);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+[data-theme='dark'] .overview-stat {
+  background-color: rgba(255,255,255,0.03);
+  color: #e6f6ee; /* light text */
+}
+
+/* Tables: alternate row colors and readable text */
+[data-theme='dark'] table,
+[data-theme='dark'] thead,
+[data-theme='dark'] tbody,
+[data-theme='dark'] tr,
+[data-theme='dark'] th,
+[data-theme='dark'] td {
+  color: #e6eef6;
+}
+
+[data-theme='dark'] tbody tr:nth-child(odd) {
+  background: rgba(255,255,255,0.02);
+}
+
+[data-theme='dark'] tbody tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+
+/* Stronger contrast for headers/badges */
+[data-theme='dark'] .MuiTableCell-head {
+  background: rgba(255,255,255,0.04);
+  color: #dff7ea;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .badge, [data-theme='dark'] .tag {
+  background: rgba(255,255,255,0.06);
+  color: #dff7ea;
+}
+
+/* Admin dashboard specific overrides */
+[data-theme='dark'] .admin-dashboard {
+  color: #e6eef6;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiCard-root {
+  background-color: #07121a !important;
+  border-color: rgba(255,255,255,0.04) !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiCardHeader-root,
+[data-theme='dark'] .admin-dashboard .MuiCardHeader-root .MuiTypography-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiCardContent-root,
+[data-theme='dark'] .admin-dashboard p,
+[data-theme='dark'] .admin-dashboard .MuiTypography-body1 {
+  color: #cfeaf0 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiPaper-root {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiTableCell-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiTableRow-root:nth-of-type(odd) {
+  background: rgba(255,255,255,0.02) !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiTableRow-root:nth-of-type(even) {
+  background: rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiTableCell-head {
+  background: rgba(0,0,0,0.45) !important;
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiChip-root {
+  background: rgba(255,255,255,0.05) !important;
+  color: #e6eef6 !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiTypography-h5,
+[data-theme='dark'] .admin-dashboard .MuiTypography-h6 {
+  color: #dff7ea !important;
+}
+
+[data-theme='dark'] .admin-dashboard .MuiCard-root .MuiCardHeader-root {
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+[data-theme='dark'] .admin-dashboard .election-dates {
+  background-color: rgba(255,255,255,0.03) !important;
+  border-radius: 6px;
+}
+
+[data-theme='dark'] .admin-dashboard .election-dates .MuiTypography-root {
+  color: #cfeaf0 !important;
+}
+
+[data-theme='dark'] .admin-dashboard .candidates-heading {
+  color: #e6f7ee !important;
+}
+
+/* Dialogs & form elements in dark mode */
+[data-theme='dark'] .MuiDialog-root .MuiPaper-root,
+[data-theme='dark'] .MuiDialog-root .MuiPaper-root * {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .MuiDialog-root .MuiPaper-root {
+  background-color: #08131a !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+[data-theme='dark'] .MuiInputBase-root,
+[data-theme='dark'] .MuiOutlinedInput-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .MuiInputLabel-root {
+  color: #bcd3d8 !important;
+}
+
+[data-theme='dark'] .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+[data-theme='dark'] .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+[data-theme='dark'] .MuiSelect-select {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .MuiDialogActions-root .MuiButton-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .MuiFormHelperText-root {
+  color: #9fb8be !important;
+}
+
+[data-theme='dark'] .MuiInputBase-input::placeholder {
+  color: rgba(230,238,246,0.5) !important;
+}
+
+/* Auth pages (login/register) dark-mode styling */
+[data-theme='dark'] .auth-page {
+  background: linear-gradient(135deg, #008751 0%, #008751 50%, #07131a 50%, #07131a 100%) !important;
+}
+
+[data-theme='dark'] .auth-paper {
+  background-color: #0f2228 !important;
+  color: #e6eef6 !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiTypography-root {
+  /* Use a light neutral color for headings in auth cards so they're readable over the dark background */
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiInputBase-root,
+[data-theme='dark'] .auth-paper .MuiOutlinedInput-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiInputLabel-root {
+  color: #bcd3d8 !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiSvgIcon-root {
+  /* Make icons lighter in dark mode so input icons and visibility icons are visible */
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .auth-paper .MuiButton-contained {
+  background-color: #008751 !important;
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .auth-paper a .MuiTypography-root {
+  color: #00a35a !important;
+}
+
+/* General voting UI fixes for dark mode */
+[data-theme='dark'] .MuiCard-root {
+  background-color: #0b1720 !important;
+  color: #e6eef6 !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .MuiCardHeader-root {
+  background-color: rgba(255,255,255,0.02) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .MuiCardHeader-root .MuiTypography-root {
+  color: #e6eef6 !important;
+}
+
+[data-theme='dark'] .MuiCardContent-root,
+[data-theme='dark'] .MuiPaper-root,
+[data-theme='dark'] .MuiAccordionDetails-root {
+  background-color: transparent !important;
+  color: #cfeaf0 !important;
+}
+
+[data-theme='dark'] .MuiPaper-root {
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+[data-theme='dark'] .MuiListItemText-root .MuiTypography-root,
+[data-theme='dark'] .MuiListItemText-root .MuiTypography-body1,
+[data-theme='dark'] .MuiTypography-body1,
+[data-theme='dark'] .MuiTypography-body2,
+[data-theme='dark'] .MuiTypography-subtitle1,
+[data-theme='dark'] .MuiTypography-subtitle2 {
+  color: #d8eef2 !important;
+}
+
+[data-theme='dark'] .MuiAccordionSummary-root {
+  background-color: rgba(255,255,255,0.01) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .MuiDivider-root {
+  background-color: rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .MuiChip-root {
+  background-color: rgba(255,255,255,0.06) !important;
+  color: #e6eef6 !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] .MuiDialogContent-root .MuiChip-root,
+[data-theme='dark'] .MuiDialogContent-root .MuiTypography-root {
+  color: #e6eef6 !important;
+}
+
+/* Voting-specific fixes: candidate biography and select menu hover */
+[data-theme='dark'] .candidate-bio {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #dff7ea !important;
+}
+
+/* Dropdown menu items used in Select: keep hover from becoming overly bright */
+[data-theme='dark'] .MuiMenuItem-root:hover {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #e6eef6 !important;
+}
+
+/* Ensure the select menu overlays buttons and other content */
+[data-theme='dark'] .MuiPaper-root[role='presentation'] {
+  z-index: 1400 !important; /* above app bar and buttons */
+}
+
+/* Make Select menus fully opaque and readable in dark mode */
+[data-theme='dark'] .MuiMenu-paper {
+  background-color: #08131a !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5) !important;
+}
+
+/* Ensure AppBar stays above content and menus in dark mode and remains fixed */
+[data-theme='dark'] .MuiAppBar-root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1500 !important; /* above select menus and other overlays */
+}
+
+/* Ensure toolbar heights are consistent so top padding matches visual height */
+[data-theme='dark'] .MuiToolbar-root {
+  min-height: 56px !important;
+}
+
+/* Force AppBar to be opaque in both themes */
+.MuiAppBar-root {
+  background-color: #008751 !important; /* fallback solid green for light theme */
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='dark'] .MuiAppBar-root {
+  background-color: #063220 !important; /* dark theme AppBar color */
+  opacity: 1 !important;
+}
+
+/* Drawer header (left navigation top) solid green in light mode */
+.MuiDrawer-root .MuiToolbar-root {
+  background-color: #008751 !important;
+  color: #ffffff !important;
+}
+
+/* Ensure the drawer header matches primary color when theme changes */
+.MuiDrawer-root .MuiToolbar-root .MuiTypography-root {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .MuiMenu-list {
+  background-color: transparent !important;
+}
+
+[data-theme='dark'] .MuiMenuItem-root {
+  color: #e6eef6 !important;
+  background-color: transparent !important;
+}
+
+[data-theme='dark'] .MuiMenuItem-root:hover {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #e6eef6 !important;
+}
+
+/* Prevent large overlay buttons from visually bleeding through the menu */
+[data-theme='dark'] .MuiSelect-root .proceed-overlay,
+[data-theme='dark'] .proceed-overlay {
+  opacity: 0.9 !important;
+}
+
+
+
+

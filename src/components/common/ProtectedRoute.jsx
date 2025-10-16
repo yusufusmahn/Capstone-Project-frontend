@@ -19,14 +19,13 @@ export const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   if (!isAuthenticated) {
+
     return <Navigate to="/login" replace />
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to appropriate dashboard based on user role
     const redirectPath = user?.role === 'admin' ? '/admin' : '/'
     return <Navigate to={redirectPath} replace />
   }
-
   return children
 }

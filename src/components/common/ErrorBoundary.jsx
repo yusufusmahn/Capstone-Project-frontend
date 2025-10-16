@@ -4,20 +4,20 @@ import { Box, Typography, Alert, Button } from '@mui/material'
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, errorInfo: null }
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error, info) {
-    // You could log to an external service here
-    console.error('Uncaught error in component tree:', error, info)
+  componentDidCatch(error, errorInfo) {
+    console.error('Uncaught error in component tree:', error, errorInfo)
+    this.setState({ error: error, errorInfo: errorInfo })
   }
 
   handleReload = () => {
-    this.setState({ hasError: false, error: null })
+    this.setState({ hasError: false, error: null, errorInfo: null })
     window.location.reload()
   }
 
@@ -31,6 +31,12 @@ export class ErrorBoundary extends React.Component {
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2 }}>
             {String(this.state.error && this.state.error.toString())}
           </Typography>
+          {this.state.errorInfo && (
+            <details style={{ whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
+              <summary>Click for error details</summary>
+              {this.state.errorInfo.componentStack}
+            </details>
+          )}
           <Button variant="contained" onClick={this.handleReload}>Reload</Button>
         </Box>
       )

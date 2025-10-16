@@ -10,7 +10,8 @@ import {
   Box,
   Alert
 } from '@mui/material'
-import { HowToVote, BarChart, Report, Settings } from '@mui/icons-material'
+import { HowToVote, BarChart, Report, Settings, Refresh } from '@mui/icons-material'
+import ActionButton from '../components/common/ActionButton'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Layout } from '../components/layout/Layout'
@@ -29,45 +30,52 @@ const Dashboard = () => {
           description: 'Participate in ongoing elections',
           icon: <HowToVote />,
           action: () => navigate('/vote'),
-          color: 'primary'
+          // use success so icons render green
+          color: 'success'
         },
         {
           title: 'View Results',
           description: 'Check election results',
           icon: <BarChart />,
           action: () => navigate('/results'),
-          color: 'secondary'
+          // Use success so the icon uses the green color from the theme
+          color: 'success'
         },
         {
           title: 'Report Incident',
           description: 'Report voting irregularities',
           icon: <Report />,
           action: () => navigate('/report-incident'),
-          color: 'warning'
+          // make the incident icon green as well
+          color: 'success'
         }
       )
     } else if (user?.role === 'admin' || user?.role === 'inec_official') {
+      const isInec = user?.role === 'inec_official'
       actions.push(
         {
-          title: 'Manage Elections',
-          description: 'Create and manage elections',
+          title: isInec ? 'Manage Voters' : 'Manage Elections',
+          description: isInec ? 'Verify and manage voter registrations' : 'Create and manage elections',
           icon: <Settings />,
-          action: () => navigate('/admin'),
-          color: 'primary'
+          action: () => navigate(isInec ? '/manage-voters' : '/admin'),
+          // make manage elections green for admin users
+          color: 'success'
         },
         {
           title: 'View Results',
           description: 'Monitor election results',
           icon: <BarChart />,
           action: () => navigate('/results'),
-          color: 'secondary'
+          // make admin/result icons green
+          color: 'success'
         },
         {
           title: 'Handle Incidents',
           description: 'Review incident reports',
           icon: <Report />,
           action: () => navigate('/incidents'),
-          color: 'warning'
+      // make incident icon green as well
+      color: 'success'
         }
       )
     }
@@ -76,13 +84,14 @@ const Dashboard = () => {
   }
 
   const quickActions = getQuickActions()
+  // quickActions computed
 
   return (
     <Layout>
       <Box 
         sx={{ 
           minHeight: '100vh',
-          background: 'linear-gradient(to bottom, #f5f5f5 0%, #ffffff 100%)',
+          background: 'transparent',
           pt: 2,
           pb: 4
         }}
@@ -116,7 +125,7 @@ const Dashboard = () => {
                       transform: 'translateY(-5px)',
                       boxShadow: 6
                     },
-                    borderLeft: `4px solid ${action.color === 'primary' ? '#1976d2' : action.color === 'secondary' ? '#dc004e' : '#ff9800'}`
+                    borderLeft: `4px solid ${action.color === 'success' ? '#008751' : action.color === 'primary' ? '#1976d2' : action.color === 'secondary' ? '#dc004e' : '#ff9800'}`
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
@@ -133,22 +142,22 @@ const Dashboard = () => {
                     </Typography>
                   </CardContent>
                   <CardActions>
-                    <Button 
-                      size="small" 
-                      color={action.color}
-                      onClick={action.action}
-                      variant="contained"
-                      sx={{ 
-                        ml: 1, 
-                        mb: 1,
-                        backgroundColor: action.color === 'primary' ? '#1976d2' : action.color === 'secondary' ? '#dc004e' : '#ff9800',
-                        '&:hover': {
-                          backgroundColor: action.color === 'primary' ? '#1565c0' : action.color === 'secondary' ? '#c51162' : '#f57c00'
-                        }
-                      }}
-                    >
-                      Get Started
-                    </Button>
+                    {/* Map colors: primary -> green, secondary -> white, warning -> green */}
+                    {action.color === 'secondary' ? (
+                      <ActionButton
+                        onClick={action.action}
+                        sx={{ ml: 1, mb: 1, backgroundColor: 'white', color: '#333', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                      >
+                        Get Started
+                      </ActionButton>
+                    ) : (
+                      <ActionButton
+                        onClick={action.action}
+                        sx={{ ml: 1, mb: 1 }}
+                      >
+                        Get Started
+                      </ActionButton>
+                    )}
                   </CardActions>
                 </Card>
               </Grid>
@@ -220,4 +229,5 @@ const Dashboard = () => {
   )
 }
 
+// Dashboard exported
 export default Dashboard

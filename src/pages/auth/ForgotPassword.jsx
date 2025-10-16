@@ -35,27 +35,9 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
+    // Temporarily disabled
     setError('')
-    setSuccess('')
-
-    try {
-      const response = await authAPI.requestPasswordReset({ phone_number: formData.phone_number })
-      setSuccess(response.data.message)
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate('/login')
-      }, 3000)
-    } catch (err) {
-      if (err.response && err.response.data && err.response.data.details) {
-        setError(err.response.data.details.phone_number || 'Failed to send password reset instructions. Please try again.')
-      } else {
-        setError('Failed to send password reset instructions. Please try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
+    setSuccess('This feature is temporarily disabled. Please contact support or try again later.')
   }
 
   return (
@@ -74,7 +56,7 @@ const ForgotPassword = () => {
           </Typography>
           
           <Typography variant="body1" align="center" sx={{ mb: 3 }}>
-            Enter your phone number to receive password reset instructions
+            This feature is temporarily disabled. Please contact support for help resetting your password.
           </Typography>
           
           {error && (
@@ -92,13 +74,12 @@ const ForgotPassword = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
-              required
+              disabled
               fullWidth
               id="phone_number"
               label="Phone Number"
               name="phone_number"
               autoComplete="tel"
-              autoFocus
               value={formData.phone_number}
               onChange={handleChange}
               InputProps={{
@@ -115,9 +96,9 @@ const ForgotPassword = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
+              disabled
             >
-              {loading ? <CircularProgress size={24} /> : 'Send Reset Instructions'}
+              Send Reset Instructions (disabled)
             </Button>
             
             <Box textAlign="center">

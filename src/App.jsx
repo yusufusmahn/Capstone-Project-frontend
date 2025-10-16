@@ -6,11 +6,13 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import ManageVoters from './pages/inec/ManageVoters'
 import VotingPage from './pages/voting/VotingPage'
 import ElectionResults from './pages/elections/ElectionResults'
 import IncidentReport from './pages/incidents/IncidentReport'
 import Profile from './pages/auth/Profile'
-import ForgotPassword from './pages/auth/ForgotPassword'
+// ForgotPassword routes temporarily disabled; component file kept for future restore
+// import ForgotPassword from './pages/auth/ForgotPassword'
 import PasswordReset from './pages/auth/PasswordReset'
 
 function App() {
@@ -19,17 +21,16 @@ function App() {
   return (
     <ErrorBoundary>
     <Routes>
-      {/* Public routes */}
       <Route path="/login" element={
         isAuthenticated ? <Navigate to="/" /> : <Login />
       } />
       <Route path="/register" element={
         isAuthenticated ? <Navigate to="/" /> : <Register />
       } />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<PasswordReset />} />
+  {/* Forgot/reset password routes temporarily disabled */}
+  {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+  {/* <Route path="/reset-password" element={<PasswordReset />} /> */}
       
-      {/* Protected routes */}
       <Route path="/" element={
         <ProtectedRoute>
           <Dashboard />
@@ -72,7 +73,12 @@ function App() {
         </ProtectedRoute>
       } />
       
-      {/* Redirect all other routes */}
+      <Route path="/manage-voters" element={
+        <ProtectedRoute requiredRole="inec_official">
+          <ManageVoters />
+        </ProtectedRoute>
+      } />
+      
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </ErrorBoundary>
