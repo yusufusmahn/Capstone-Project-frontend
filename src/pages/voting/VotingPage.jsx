@@ -301,6 +301,21 @@ const VotingPage = () => {
     }
   }
 
+  const resetVotingProcess = () => {
+    // Reset the voting UI to initial state so user can vote in another election
+    setActiveStep(0)
+    setSelectedElection(null)
+    setBallot(null)
+    setSelectedCandidates({})
+    setConfirmationOpen(false)
+    setPreviewOpen(false)
+    setPreviewCandidate(null)
+    setError('')
+    // Refresh available elections and voting history
+    loadActiveElections()
+    loadVotingHistory()
+  }
+
 
   if (loading && activeStep === 0 && !selectedElection) {
     return (

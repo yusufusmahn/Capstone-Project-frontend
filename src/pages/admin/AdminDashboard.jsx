@@ -98,6 +98,7 @@ const AdminDashboard = () => {
     election: '',
     photo: null
   })
+  const [candidatePhotoPreview, setCandidatePhotoPreview] = useState(null)
   const [lastRefreshed, setLastRefreshed] = useState(new Date())
 
   const loadData = async () => {
@@ -265,6 +266,17 @@ const AdminDashboard = () => {
       ...prev,
       photo: file
     }))
+
+    // create a preview URL and revoke previous if any
+    if (candidatePhotoPreview) {
+      try { URL.revokeObjectURL(candidatePhotoPreview) } catch(e) {}
+      setCandidatePhotoPreview(null)
+    }
+
+    if (file) {
+      const objUrl = URL.createObjectURL(file)
+      setCandidatePhotoPreview(objUrl)
+    }
   }
 
   const handleCreateElection = async () => {
@@ -334,6 +346,10 @@ const AdminDashboard = () => {
         election: '',
         photo: null
       })
+      if (candidatePhotoPreview) {
+        try { URL.revokeObjectURL(candidatePhotoPreview) } catch(e) {}
+        setCandidatePhotoPreview(null)
+      }
       await loadElections()
     } catch (err) {
       console.error('Failed to create candidate:', err)
@@ -342,6 +358,20 @@ const AdminDashboard = () => {
       setLoading(false)
     }
   }
+
+  // cleanup preview URL when dialog closes or component unmounts
+  useEffect(() => {
+    if (!showCandidateForm && candidatePhotoPreview) {
+      try { URL.revokeObjectURL(candidatePhotoPreview) } catch (e) {}
+      setCandidatePhotoPreview(null)
+    }
+
+    return () => {
+      if (candidatePhotoPreview) {
+        try { URL.revokeObjectURL(candidatePhotoPreview) } catch (e) {}
+      }
+    }
+  }, [showCandidateForm])
 
   const handleCreateFormChange = (e) => {
     const { name, value } = e.target
@@ -1348,6 +1378,15 @@ const AdminDashboard = () => {
               onChange={handleCandidatePhotoChange}
               style={{ marginTop: '16px' }}
             />
+            {candidatePhotoPreview && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <img
+                  src={candidatePhotoPreview}
+                  alt="Candidate Preview"
+                  style={{ maxWidth: '60%', maxHeight: 240, objectFit: 'cover', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                />
+              </Box>
+            )}
           </DialogContent>
           <DialogActions>
             <ActionButton variant="text" scheme="cancel" onClick={() => setShowCandidateForm(false)} sx={{ px: 2, py: 0.5, fontWeight: 600 }}>Cancel</ActionButton>
