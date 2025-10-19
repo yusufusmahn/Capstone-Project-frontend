@@ -1233,10 +1233,10 @@ const AdminDashboard = () => {
                 required
               >
                 <MenuItem value="presidential">Presidential</MenuItem>
-                <MenuItem value="governorship">Governorship</MenuItem>
+                <MenuItem value="gubernatorial">Gubernatorial</MenuItem>
                 <MenuItem value="senatorial">Senatorial</MenuItem>
-                <MenuItem value="house_of_representatives">House of Representatives</MenuItem>
-                <MenuItem value="state_assembly">State Assembly</MenuItem>
+                <MenuItem value="house_of_reps">House of Representatives</MenuItem>
+                <MenuItem value="house_of_assembly">State Assembly</MenuItem>
                 <MenuItem value="local_government">Local Government</MenuItem>
               </Select>
             </FormControl>

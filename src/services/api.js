@@ -188,12 +188,16 @@ export const adminAPI = {
         incidentsAPI.getIncidentStats().catch(() => null)
       ])
 
-      const elections = (electionsRes && electionsRes.data) || []
+  const elections = (electionsRes && electionsRes.data) || []
+  const electionsMeta = (electionsRes && electionsRes.meta) || {}
       const voters = (votersRes && votersRes.data) || []
       const incidentStats = (incidentsStatsRes && incidentsStatsRes.data) || null
 
-      const totalElections = elections.length || 0
-      const activeElections = (Array.isArray(elections) ? elections.filter(e => e.status === 'ongoing').length : 0) || 0
+  // If the API returned pagination metadata, prefer its total/count value
+  const totalElections = electionsMeta.count || electionsMeta.total || elections.length || 0
+  // For active elections we can either rely on server-provided aggregated count in meta
+  // or compute from the current page. Prefer meta.active if available.
+  const activeElections = electionsMeta.active || (Array.isArray(elections) ? elections.filter(e => e.status === 'ongoing').length : 0) || 0
 
       const totalVoters = voters.length || 0
       const verifiedVoters = (Array.isArray(voters) ? voters.filter(v => v.registration_verified).length : 0) || 0
